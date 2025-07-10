@@ -23,12 +23,14 @@ class WorkerThread(QThread):
                  play_music: bool=None,
                  idea: bool=None,
                  translate: bool=None,
+                 browser: bool=None,
                  ) -> None:
         super().__init__()
         self.music = music
         self.play_music = play_music
         self.idea = idea
         self.translate = translate
+        self.browser = browser
 
         self.mutex = QMutex()
         self.is_running = True
@@ -112,6 +114,13 @@ class WorkerThread(QThread):
 
         self.back_home()
 
+        if self.browser:
+            self.message_signal.emit(f'正在打开浏览器')
+            time.sleep(2)
+            self.open_software(os.path.join(photo_path, 'browser.png'), 2)
+
+        self.back_home()
+
         if self.music:
             self.message_signal.emit(f'正在打开音乐软件')
             time.sleep(2)
@@ -190,15 +199,15 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.open_browser, 2, 0)
 
         self.gitee = QCheckBox('Gitee')
-        self.gitee.setChecked(True)
+        # self.gitee.setChecked(True)
         grid.addWidget(self.gitee, 2, 1)
 
         self.deepseek = QCheckBox('DS')
-        self.deepseek.setChecked(True)
+        # self.deepseek.setChecked(True)
         grid.addWidget(self.deepseek, 2, 2)
 
         self.nami = QCheckBox('NM')
-        self.nami.setChecked(True)
+        # self.nami.setChecked(True)
         grid.addWidget(self.nami, 2, 3)
 
         self.translate = QCheckBox('Translate')
@@ -265,16 +274,19 @@ class MainWindow(QMainWindow):
             translate = self.translate.isChecked()
             if translate:
                 self.output_text.append('# --> 待执行任务：打开翻译软件翻译')
+            browser = self.open_browser
+            if browser.isChecked():
+                self.output_text.append('# --> 待执行任务：打开浏览器')
 
 
             # 如果一个也没有选中的话会触发下面的条件
-            if not music and not play_music and not idea:
+            if not music and not play_music and not idea and not browser and not translate:
                 self.output_text.append('# --> 牛马: 快选择你要干的活')
             else:
                 self.output_text.append('')
                 self.output_text.append('# --> 牛马: 开始工作吧')
 
-                self.worker_thread = WorkerThread(music, play_music, idea, translate)
+                self.worker_thread = WorkerThread(music, play_music, idea, translate, browser)
                 self.worker_thread.message_signal.connect(self.update_output)
                 self.worker_thread.start()
 
