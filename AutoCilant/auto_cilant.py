@@ -1,4 +1,3 @@
-
 from PySide6.QtCore import QThread, Signal, QMutex
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QTextEdit, QComboBox,QLabel,QSpinBox, QGridLayout,
@@ -7,6 +6,7 @@ import pyautogui
 from datetime import datetime
 import time
 import os
+import random
 
 
 path = os.path.dirname(__file__)
@@ -22,11 +22,13 @@ class WorkerThread(QThread):
                  music: bool=None,
                  play_music: bool=None,
                  idea: bool=None,
+                 translate: bool=None,
                  ) -> None:
         super().__init__()
         self.music = music
         self.play_music = play_music
         self.idea = idea
+        self.translate = translate
 
         self.mutex = QMutex()
         self.is_running = True
@@ -77,6 +79,10 @@ class WorkerThread(QThread):
             pos_x_y = self.is_exist(picture_path)
             pyautogui.moveTo(pos_x_y, duration=0.2)
             pyautogui.click(clicks=click, interval=0.2)
+            time.sleep(2)
+            xx = random.randint(0, 1000)
+            yy = random.randint(0, 1000)
+            pyautogui.moveTo(x=xx, y=yy, duration=0.2)
 
         except Exception as e:
             self.message_signal.emit(f"[ERROR]: {e}")
@@ -91,6 +97,21 @@ class WorkerThread(QThread):
 
         self.back_home()
 
+        if self.idea:
+            self.message_signal.emit(f'正在打开idea')
+            time.sleep(2)
+            self.open_software(os.path.join(photo_path, 'idea.png'), 2)
+            time.sleep(2)
+
+        self.back_home()
+
+        if self.translate:
+            self.message_signal.emit(f'正在打开翻译软件')
+            time.sleep(2)
+            self.open_software(os.path.join(photo_path, 'translate.png'), 2)
+
+        self.back_home()
+
         if self.music:
             self.message_signal.emit(f'正在打开音乐软件')
             time.sleep(2)
@@ -100,14 +121,6 @@ class WorkerThread(QThread):
             self.message_signal.emit(f'准备播放音乐')
             time.sleep(6)
             self.open_software(os.path.join(photo_path, 'MusicPlay.png'), 1)
-            time.sleep(2)
-
-        self.back_home()
-
-        if self.idea:
-            self.message_signal.emit(f'正在打开idea')
-            time.sleep(2)
-            self.open_software(os.path.join(photo_path, 'idea.png'), 2)
             time.sleep(2)
 
 
@@ -249,6 +262,9 @@ class MainWindow(QMainWindow):
             idea = self.open_idea.isChecked()
             if idea:
                 self.output_text.append('# --> 待执行任务：打开idea')
+            translate = self.translate.isChecked()
+            if translate:
+                self.output_text.append('# --> 待执行任务：打开翻译软件翻译')
 
 
             # 如果一个也没有选中的话会触发下面的条件
@@ -258,7 +274,7 @@ class MainWindow(QMainWindow):
                 self.output_text.append('')
                 self.output_text.append('# --> 牛马: 开始工作吧')
 
-                self.worker_thread = WorkerThread(music, play_music, idea)
+                self.worker_thread = WorkerThread(music, play_music, idea, translate)
                 self.worker_thread.message_signal.connect(self.update_output)
                 self.worker_thread.start()
 
