@@ -3,7 +3,6 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QTextEdit, QComboBox,QLabel,QSpinBox, QGridLayout,
     QVBoxLayout, QWidget, QLineEdit, QHBoxLayout,QCheckBox)
 import pyautogui
-import subprocess
 from datetime import datetime
 import time
 import os
@@ -36,59 +35,59 @@ class WorkerThread(QThread):
         self.mutex = QMutex()
         self.is_running = True
 
-    # def back_home(self):
-    #     """ 返回桌面 """
-    #     self.message_signal.emit('即将返回桌面')
-    #     time.sleep(1)
-    #     self.mutex.lock()
-    #     running = self.is_running
-    #     self.mutex.unlock()
-    #     if not running:
-    #         return
-    #     self.message_signal.emit('win + d 组合键被按下')
-    #     pyautogui.hotkey('win', 'd')
-    #
-    # def is_exist(self, image_path):
-    #     """ 判断图标是否存在并返回坐标值 """
-    #     try:
-    #         # 获取图片坐标
-    #         coordinates = pyautogui.locateOnScreen(
-    #             image_path,
-    #             minSearchTime=2,
-    #             confidence=0.97,
-    #             grayscale=True
-    #         )
-    #
-    #         if coordinates:
-    #             # 将 Box 转换为标准元组并确保使用 Python 原生 int
-    #             box_tuple = (
-    #                 int(coordinates.left),
-    #                 int(coordinates.top),
-    #                 int(coordinates.width),
-    #                 int(coordinates.height)
-    #             )
-    #             return box_tuple
-    #     except Exception as e:
-    #         self.message_signal.emit(f'{e}')
+    def back_home(self):
+        """ 返回桌面 """
+        self.message_signal.emit('即将返回桌面')
+        time.sleep(2)
+        self.mutex.lock()
+        running = self.is_running
+        self.mutex.unlock()
+        if not running:
+            return
+        self.message_signal.emit('win + d 组合键被按下')
+        pyautogui.hotkey('win', 'd')
 
-    # def open_software(self, picture_path, click):
-    #     self.mutex.lock()
-    #     running = self.is_running
-    #     self.mutex.unlock()
-    #     if not running:
-    #         return
-    #
-    #     try:
-    #         pos_x_y = self.is_exist(picture_path)
-    #         pyautogui.moveTo(pos_x_y, duration=0.2)
-    #         pyautogui.click(clicks=click, interval=0.2)
-    #         time.sleep(2)
-    #         xx = random.randint(0, 1000)
-    #         yy = random.randint(0, 1000)
-    #         pyautogui.moveTo(x=xx, y=yy, duration=0.2)
-    #
-    #     except Exception as e:
-    #         self.message_signal.emit(f"[ERROR]: {e}")
+    def is_exist(self, image_path):
+        """ 判断图标是否存在并返回坐标值 """
+        try:
+            # 获取图片坐标
+            coordinates = pyautogui.locateOnScreen(
+                image_path,
+                minSearchTime=2,
+                confidence=0.97,
+                grayscale=True
+            )
+
+            if coordinates:
+                # 将 Box 转换为标准元组并确保使用 Python 原生 int
+                box_tuple = (
+                    int(coordinates.left),
+                    int(coordinates.top),
+                    int(coordinates.width),
+                    int(coordinates.height)
+                )
+                return box_tuple
+        except pyautogui.ImageNotFoundException as e:
+            self.message_signal.emit(f'{e}')
+
+    def open_software(self, picture_path, click):
+        self.mutex.lock()
+        running = self.is_running
+        self.mutex.unlock()
+        if not running:
+            return
+
+        try:
+            pos_x_y = self.is_exist(picture_path)
+            pyautogui.moveTo(pos_x_y, duration=0.2)
+            pyautogui.click(clicks=click, interval=0.2)
+            time.sleep(2)
+            xx = random.randint(0, 1000)
+            yy = random.randint(0, 1000)
+            pyautogui.moveTo(x=xx, y=yy, duration=0.2)
+
+        except Exception as e:
+            self.message_signal.emit(f"[ERROR]: {e}")
 
     def run(self):
         """ 执行工作线程 """
@@ -98,37 +97,40 @@ class WorkerThread(QThread):
         if not running:
             return
 
-        # self.back_home()
+        self.back_home()
 
         if self.idea:
             self.message_signal.emit(f'正在打开idea')
-            time.sleep(1)
-            # self.open_software(os.path.join(photo_path, 'idea.png'), 2)
-            subprocess.Popen(r"D:\pycharm\PyCharm Community Edition 2025.1.2\bin\pycharm64.exe")
+            time.sleep(2)
+            self.open_software(os.path.join(photo_path, 'idea.png'), 2)
+            time.sleep(2)
+
+        self.back_home()
 
         if self.translate:
             self.message_signal.emit(f'正在打开翻译软件')
-            time.sleep(1)
-            # self.open_software(os.path.join(photo_path, 'translate.png'), 2)
-            subprocess.Popen(r"D:\有道词典\Dict\YoudaoDict.exe")
+            time.sleep(2)
+            self.open_software(os.path.join(photo_path, 'translate.png'), 2)
+
+        self.back_home()
 
         if self.browser:
             self.message_signal.emit(f'正在打开浏览器')
-            time.sleep(1)
-            # self.open_software(os.path.join(photo_path, 'browser.png'), 2)
-            subprocess.Popen(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe")
+            time.sleep(2)
+            self.open_software(os.path.join(photo_path, 'browser.png'), 2)
+
+        self.back_home()
 
         if self.music:
             self.message_signal.emit(f'正在打开音乐软件')
-            time.sleep(1)
-            # self.open_software(os.path.join(photo_path, 'Music.png'), 2)
-            subprocess.Popen(r"D:\NeteaseCloudMusic\CloudMusic\cloudmusic.exe")
+            time.sleep(2)
+            self.open_software(os.path.join(photo_path, 'Music.png'), 2)
 
-        # if self.play_music:
-        #     self.message_signal.emit(f'准备播放音乐')
-        #     time.sleep(6)
-        #     self.open_software(os.path.join(photo_path, 'MusicPlay.png'), 1)
-
+        if self.play_music:
+            self.message_signal.emit(f'准备播放音乐')
+            time.sleep(6)
+            self.open_software(os.path.join(photo_path, 'MusicPlay.png'), 1)
+            time.sleep(2)
 
 
 
