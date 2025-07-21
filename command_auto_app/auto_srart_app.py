@@ -24,7 +24,7 @@ class WorkerThread(QThread):
     # 使用 pyside6.QrCore.Signal 创建线程 用于向主线程发送信号
     message_signal = Signal(str)
 
-    def __init__(self, music_path=None, idea_path=None, translate_path=None):
+    def __init__(self, music_path=None, idea_path=None, translate_path=None, browse_path=None):
         super().__init__()
         self.mutex = QMutex()
         self.is_running = True
@@ -32,11 +32,20 @@ class WorkerThread(QThread):
         self.music_path = music_path
         self.idea_path = idea_path
         self.translate_path = translate_path
+        self.browse_path = browse_path
+
+        self.app_name_path = {
+            'music': self.music_path,
+            'idea': self.idea_path,
+            'translate': self.translate_path,
+            'browse': self.browse_path
+        }
 
 
 
     def start_app(self, app_path, app_name):
         try:
+            self.message_signal.emit(f"path: {app_path}")
             subprocess.Popen(app_path)
             self.message_signal.emit(f"{app_name}启动成功")
         except Exception as e:
@@ -45,41 +54,60 @@ class WorkerThread(QThread):
 
     def run(self):
         """ 执行工作线程 """
-        self.mutex.lock()
-        running = self.is_running
-        self.mutex.unlock()
-        if not running:
-            return
 
-        if self.music_path:
-            self.message_signal.emit(f'正在打开 music')
-            self.start_app(self.music_path, "music")
+        for app_name, app_path in self.app_name_path.items():
+            if app_path:
+                self.message_signal.emit(f"")
+                self.message_signal.emit(f'##=====>>>==***==<<<=====##')
+                self.message_signal.emit(f'正在打开 {app_name}')
+                self.start_app(app_path, app_name)
 
-        for _ in range(3):
-            self.mutex.lock()
-            running = self.is_running
-            self.mutex.unlock()
-            if not running:
-                return
-            time.sleep(1)
+            for _ in range(3):
+                self.mutex.lock()
+                running = self.is_running
+                self.mutex.unlock()
+                if not running:
+                    return
+                time.sleep(1)
 
-        if self.idea_path:
-            self.message_signal.emit(f'正在打开 idea')
-            self.start_app(self.idea_path, "idea")
+        self.message_signal.emit(f'')
+        self.message_signal.emit(f'<<<<<<<<<<<<<<<<<<<<<<<<<<')
+        self.message_signal.emit(f'#########软件打开完成###########')
+        self.message_signal.emit(f'>>>>>>>>>>>>>>>>>>>>>>>>>>')
 
-        for _ in range(3):
-            self.mutex.lock()
-            running = self.is_running
-            self.mutex.unlock()
-            if not running:
-                return
-            time.sleep(1)
-
-        if self.translate_path:
-            self.message_signal.emit(f'正在打开 translate')
-            self.start_app(self.translate_path, "translate")
-
-        self.message_signal.emit(f'软件打开完成!!!')
+        # self.mutex.lock()
+        # running = self.is_running
+        # self.mutex.unlock()
+        # if not running:
+        #     return
+        #
+        # if self.music_path:
+        #     self.message_signal.emit(f'正在打开 music')
+        #     self.start_app(self.music_path, "music")
+        #
+        # for _ in range(3):
+        #     self.mutex.lock()
+        #     running = self.is_running
+        #     self.mutex.unlock()
+        #     if not running:
+        #         return
+        #     time.sleep(1)
+        #
+        # if self.idea_path:
+        #     self.message_signal.emit(f'正在打开 idea')
+        #     self.start_app(self.idea_path, "idea")
+        #
+        # for _ in range(3):
+        #     self.mutex.lock()
+        #     running = self.is_running
+        #     self.mutex.unlock()
+        #     if not running:
+        #         return
+        #     time.sleep(1)
+        #
+        # if self.translate_path:
+        #     self.message_signal.emit(f'正在打开 translate')
+        #     self.start_app(self.translate_path, "translate")
 
     def stop(self):
         self.mutex.lock()
@@ -147,13 +175,13 @@ class MainWindow(QMainWindow):
         self.translate_path.setText(os.path.join(start_path['translate']))
         grid.addWidget(self.translate_path, 2, 1)
 
-        self.open_translate = QCheckBox('open_browse')
-        self.open_translate.setChecked(True if default_status['browse'] == 'True' else False)
-        grid.addWidget(self.open_translate, 3, 0)
+        self.open_browse = QCheckBox('open_browse')
+        self.open_browse.setChecked(True if default_status['browse'] == 'True' else False)
+        grid.addWidget(self.open_browse, 3, 0)
 
-        self.translate_path = QLineEdit()
-        self.translate_path.setText(os.path.join(start_path['browse']))
-        grid.addWidget(self.translate_path, 3, 1)
+        self.browse_path = QLineEdit()
+        self.browse_path.setText(os.path.join(start_path['browse']))
+        grid.addWidget(self.browse_path, 3, 1)
 
         # 绑容定网格布局到垂直布局中
         v_layout.addLayout(grid)
@@ -214,12 +242,17 @@ class MainWindow(QMainWindow):
                 self.output_text.append('# --> 待执行任务：打开翻译软件')
                 translate_path = self.translate_path.text()
 
+            browse_path = None
+            if self.open_browse.isChecked():
+                self.output_text.append('# --> 待执行任务：打开浏览器')
+                browse_path = self.browse_path.text()
 
-            if not music_path and not idea_path and not translate_path:
+
+            if not music_path and not idea_path and not translate_path and not browse_path:
                 self.output_text.append('# --> 错误：请选择要启动的程序')
                 return
             else:
-                self.worker_thread = WorkerThread(music_path, idea_path, translate_path)
+                self.worker_thread = WorkerThread(music_path, idea_path, translate_path, browse_path)
                 self.worker_thread.message_signal.connect(self.update_output)
                 self.worker_thread.start()
 
@@ -262,7 +295,8 @@ class MainWindow(QMainWindow):
         app_paths= {
                     'music': self.music_path.text(),
                     'idea': self.idea_path.text(),
-                    'translate': self.translate_path.text()
+                    'translate': self.translate_path.text(),
+                    'browse': self.browse_path.text()
                     }
 
         for key, value in app_paths.items():
@@ -271,7 +305,8 @@ class MainWindow(QMainWindow):
         start_or_close = {
             'music': self.open_music.isChecked(),
             'idea': self.open_idea.isChecked(),
-            'translate': self.open_translate.isChecked()
+            'translate': self.open_translate.isChecked(),
+            'browse': self.open_browse.isChecked()
         }
 
         for key, value in start_or_close.items():
