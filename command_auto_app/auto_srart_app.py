@@ -147,6 +147,14 @@ class MainWindow(QMainWindow):
         self.translate_path.setText(os.path.join(start_path['translate']))
         grid.addWidget(self.translate_path, 2, 1)
 
+        self.open_translate = QCheckBox('open_browse')
+        self.open_translate.setChecked(True if default_status['browse'] == 'True' else False)
+        grid.addWidget(self.open_translate, 3, 0)
+
+        self.translate_path = QLineEdit()
+        self.translate_path.setText(os.path.join(start_path['browse']))
+        grid.addWidget(self.translate_path, 3, 1)
+
         # 绑容定网格布局到垂直布局中
         v_layout.addLayout(grid)
 
