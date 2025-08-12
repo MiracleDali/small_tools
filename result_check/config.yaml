@@ -1,0 +1,10 @@
+monkey_time: 20250808010180
+monkey_url:
+- http://172.25.192.226/report/spec/
+- http://172.25.192.128/report/spec/
+mtbf_time: 20250812000000
+mtbf_url:
+- http://172.25.193.45/report/spec/
+- http://172.25.193.44/report/spec/
+- http://172.25.193.17/report/spec/
+- http://172.25.193.46/report/spec/
